@@ -1,6 +1,7 @@
 {
   "name": "crystalpad-code",
   "scripts": {
+    "compile": "npx hardhat compile",
     "local_node": "npx hardhat node",
     "deploy_local": "npx hardhat run --network localhost scripts/deploy.js",
     "deploy_sepolia": "npx hardhat run --network sepolia scripts/deploy.js",
@@ -10,5 +11,10 @@
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "dotenv": "^16.4.5",
     "hardhat": "^2.21.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "@sablier/v2-core": "^1.1.2",
+    "solady": "^0.0.177"
   }
 }
