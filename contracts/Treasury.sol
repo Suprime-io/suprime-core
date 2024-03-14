@@ -58,7 +58,7 @@ contract Treasury is Ownable {
         // Initialize the owner and implementation address.
         _initializeOwner(_owner);
 
-        // Set the initial recipientes here.
+        // Set the initial recipients here.
         recipients.push(_owner);
         feePercents[_owner] = 1 ether;
 

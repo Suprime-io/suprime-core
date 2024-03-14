@@ -1,32 +1,70 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
 const hre = require("hardhat");
+const { SABLER, TREASURY_FEE_RECIPIENT } = require('./addresses_lookup')
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
 
-  const lockedAmount = hre.ethers.parseEther("0.001");
+  const deployerAddr = (await hre.ethers.getSigners())[0];
 
-  const lock = await hre.ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  await lock.waitForDeployment();
-
+  const pool = await hre.ethers.deployContract("LiquidityBootstrapPool", [SABLER[hre.network.name]]);
+  await pool.waitForDeployment();
   console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
+    `LiquidityBootstrapPool with SABLER address  ${SABLER[hre.network.name]} deployed to ${pool.target}`
   );
+
+  //verify
+  if (hre.network.name !== 'localhost') {
+    await hre.run("verify:verify", {
+      address: pool.target,
+      constructorArguments: [
+        SABLER[hre.network.name]
+      ],
+    });
+  }
+
+  const treasury = await hre.ethers.deployContract("Treasury", [TREASURY_FEE_RECIPIENT[hre.network.name]]);
+  await treasury.waitForDeployment();
+  console.log(
+    `Treasury deployed to ${treasury.target}`
+  );
+
+  //verify
+  if (hre.network.name !== 'localhost') {
+    await hre.run("verify:verify", {
+      address: treasury.target,
+      constructorArguments: [
+        TREASURY_FEE_RECIPIENT[hre.network.name]
+      ],
+    });
+  }
+
+  const factoryArgs = [
+    pool.target,
+    deployerAddr,
+    treasury.target,
+    '400',            //4%, _platformFee
+    '0',              //0%, _referrerFee
+    '200'             //2%, _swapFee
+  ];
+  const factory = await hre.ethers.deployContract("LiquidityBootstrapPoolFactory", factoryArgs);
+  await factory.waitForDeployment();
+  console.log(
+    `Factory deployed to ${factory.target}`
+  );
+
+  //verify
+  if (hre.network.name !== 'localhost') {
+    await hre.run("verify:verify", {
+      address: factory.target,
+      constructorArguments: factoryArgs,
+    });
+  }
+
+  //TODO TransferOwnership: LiquidityBootstrapPoolFactory
+  //TODO Update recipients: Treasury
+  //TODO TransferOwnership: Treasury
+
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

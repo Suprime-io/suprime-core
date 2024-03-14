@@ -4,8 +4,7 @@
     "compile": "npx hardhat compile",
     "local_node": "npx hardhat node",
     "deploy_local": "npx hardhat run --network localhost scripts/deploy.js",
-    "deploy_sepolia": "npx hardhat run --network sepolia scripts/deploy.js",
-    "verify": "npx hardhat verify --network sepolia 0x6E922943347ba48540f9Ed0a31568f660F9bF7f0 1710193192"
+    "deploy_sepolia": "npx hardhat run --network sepolia scripts/deploy.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
