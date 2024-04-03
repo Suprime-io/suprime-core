@@ -39,7 +39,7 @@ async function main() {
 
   const factoryArgs = [
     pool.target,
-    deployerAddr,
+    deployerAddr.address,
     treasury.target,
     '400',            //4%, _platformFee
     '0',              //0%, _referrerFee
