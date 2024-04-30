@@ -48,7 +48,8 @@ contract LiquidityBootstrapPoolFactory is Ownable {
 
     /// @dev Emitted when a new Liquidity Bootstrap Pool is created.
     /// @param pool The address of the newly created Liquidity Bootstrap Pool.
-    event PoolCreated(address pool);
+    /// @param ipfsData IPFS hash for the pool meta.
+    event PoolCreated(address pool, string ipfsData);
 
     /// @dev Emitted when the fee recipient address is updated.
     /// @param recipient The new fee recipient address.
@@ -65,6 +66,10 @@ contract LiquidityBootstrapPoolFactory is Ownable {
     /// @dev Emitted when the swap fee is updated.
     /// @param fee The new swap fee value.
     event SwapFeeSet(uint256 fee);
+
+    /// @dev Emitted when the pool is whitelisted
+    /// @param pool Whitelisted pool.
+    event Whitelisted(address pool);
 
     /// -----------------------------------------------------------------------
     /// Errors
@@ -155,7 +160,8 @@ contract LiquidityBootstrapPoolFactory is Ownable {
         PoolSettings memory args,
         uint256 shares,
         uint256 assets,
-        bytes32 salt
+        bytes32 salt,
+        string memory ipfsData
     )
     external
     virtual
@@ -198,7 +204,13 @@ contract LiquidityBootstrapPoolFactory is Ownable {
         args.share.safeTransferFrom(msg.sender, pool, shares);
         args.asset.safeTransferFrom(msg.sender, pool, assets);
 
-        emit PoolCreated(pool);
+        emit PoolCreated(pool, ipfsData);
+    }
+
+    /// @notice Whitelists the pool. Note: doesn't use the store, for UI purpose only
+    /// @param pool The pool to whitelist.
+    function whitelistPool(address pool) external virtual onlyOwner {
+        emit Whitelisted(pool);
     }
 
     /// -----------------------------------------------------------------------

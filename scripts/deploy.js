@@ -43,7 +43,7 @@ async function main() {
     treasury.target,
     '400',            //4%, _platformFee
     '0',              //0%, _referrerFee
-    '200'             //2%, _swapFee
+    '300'             //3%, _swapFee
   ];
   const factory = await hre.ethers.deployContract("LiquidityBootstrapPoolFactory", factoryArgs);
   await factory.waitForDeployment();
