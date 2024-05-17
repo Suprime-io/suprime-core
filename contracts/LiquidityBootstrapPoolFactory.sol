@@ -51,6 +51,11 @@ contract LiquidityBootstrapPoolFactory is Ownable {
     /// @param ipfsData IPFS hash for the pool meta.
     event PoolCreated(address pool, string ipfsData);
 
+    /// @dev Updates the IPFS hash for the pool
+    /// @param pool The address of the pool
+    /// @param ipfsData IPFS hash for the pool meta.
+    event PoolUpdated(address pool, string ipfsData);
+
     /// @dev Emitted when the fee recipient address is updated.
     /// @param recipient The new fee recipient address.
     event FeeRecipientSet(address recipient);
@@ -207,10 +212,18 @@ contract LiquidityBootstrapPoolFactory is Ownable {
         emit PoolCreated(pool, ipfsData);
     }
 
-    /// @notice Whitelists the pool. Note: doesn't use the store, for UI purpose only
+    /// @notice Whitelists the pool.
+    /// @dev Note: it doesn't use the store, for UI purpose only
     /// @param pool The pool to whitelist.
     function whitelistPool(address pool) external virtual onlyOwner {
         emit Whitelisted(pool);
+    }
+
+    /// @notice Whitelists the pool.
+    /// @dev Note: it doesn't use the store, for UI purpose only
+    /// @param pool The pool to whitelist.
+    function updateIPFS(address pool, string memory ipfsData) external virtual onlyOwner {
+        emit PoolUpdated(pool, ipfsData);
     }
 
     /// -----------------------------------------------------------------------
