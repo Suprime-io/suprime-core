@@ -1,5 +1,5 @@
 {
-  "name": "crystalpad-code",
+  "name": "suprime-core",
   "scripts": {
     "compile": "npx hardhat compile",
     "local_node": "npx hardhat node",
