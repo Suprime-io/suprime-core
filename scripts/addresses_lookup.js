@@ -1,3 +1,9 @@
+module.exports.MAIN = {
+    localhost: "0x0cF8689FC575e1eB67D55b7842456e4825b01b1a",
+    sepolia: "0x0cF8689FC575e1eB67D55b7842456e4825b01b1a",
+    mainnet: "0x0cF8689FC575e1eB67D55b7842456e4825b01b1a",
+};
+
 module.exports.SABLER = {
     localhost: "0x7a43F8a888fa15e68C103E18b0439Eb1e98E4301",
     sepolia: "0x7a43F8a888fa15e68C103E18b0439Eb1e98E4301",
