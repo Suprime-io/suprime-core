@@ -25,7 +25,7 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         __ERC1155_init("");
     }
 
-    /// @dev this is a correct URI: "https://token-cdn-domain/"
+    /// @dev this is a correct URI: "https://t§oken-cdn-domain/"
     function setBaseURI(string calldata newURI) external onlyOwner {
         if (bytes(newURI).length == 0) {
             revert CustomErrors.InvalidInput(0);
@@ -35,10 +35,13 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
 
     /// @notice stake token without approve, minting new nft to the sender
     /// @param _amountSuprime the amount of SUPRIME tokens to stake
-    /// @param _lock locking period of the stake, should be 1,3,6,12,24 month
+    /// @param _tokenId (optional) the token the sender wants to add to
+    /// OR
+    /// @param _lock locking (optional) period of the stake, should be 3,6,12,24,32 month
     /// @param _permitParams permit function parameters
     function stakeWithPermit(
         uint256 _amountSuprime,
+        uint256 _tokenId,
         uint8 _lock,
         PermitParams calldata _permitParams
     ) external nonReentrant {
@@ -58,15 +61,24 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
                 revert CustomErrors.InvalidSignature();
             }
         }
-
-        _stake(msg.sender, _amountSuprime, _lock, true);
+        if (_tokenId > 0) {
+            _addToStake(msg.sender, _tokenId, _amountSuprime, true);
+        } else {
+            _stake(msg.sender, _amountSuprime, _lock);
+        }
     }
 
     /// @notice stake the token, approve is required before that, minting new nft to the sender
     /// @param _amountSuprime amount of SUPRIME token to stake
-    /// @param _lock locking period of the stake, should be 1,3,6,12,24 month
-    function stake(uint256 _amountSuprime, uint8 _lock) external nonReentrant {
-        _stake(msg.sender, _amountSuprime, _lock, true);
+    /// @param _tokenId (optional) the token the sender wants to add to
+    /// OR
+    /// @param _lock locking (optional) period of the stake, should be 3,6,12,24,32 month
+    function stake(uint256 _amountSuprime, uint256 _tokenId, uint8 _lock) external nonReentrant {
+        if (_tokenId > 0) {
+            _addToStake(msg.sender, _tokenId, _amountSuprime, true);
+        } else {
+            _stake(msg.sender, _amountSuprime, _lock);
+        }
     }
 
     /// @notice withdraw the token + rewards of the given nft, access: nft owner
@@ -88,51 +100,31 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         _removeTokenPosition(_tokenId, _stakedAmount);
     }
 
-    /// @notice claim rewards, by the nft owner
-    /// @dev claim rewards for one or more position
-    /// @param _tokenIds list of token ids to claim its rewards
-    function claimReward(uint256[] calldata _tokenIds) external {
-        uint256 reward = _calculateReward(_tokenIds);
+    /// @notice claim rewards, by the owner
+    /// @param _tokenId NFT id
+    function claimReward(uint256 _tokenId) external {
+        uint256 reward = _actualizeReward(_tokenId);
 
         if (reward != 0) {
             suprimeToken.transfer(msg.sender, reward);
         }
     }
 
-    /// @notice restake rewards of given nft/nfts access: by nft owner
-    /// @dev user restake the rewards of one or more position to a new position or an existence position
-    /// @param _tokenIds list of token ids to restake its rewards
-    /// @param _stakingPositionInput if _stakingPosition new , the _stakingPositionInput should be locking period
-    /// otherwise should be an existence tokenId
-    /// @param _stakingPosition new native staking pool staker, or has an existence nft
+    /// @notice restake accumulated rewards of a given nft
+    /// @param _tokenId id to restake the rewards of
     function restakeReward(
-        uint256[] calldata _tokenIds,
-        uint256 _stakingPositionInput,
-        uint8 _stakingPosition
+        uint256 _tokenId
     ) external nonReentrant {
-        uint256 reward = _calculateReward(_tokenIds);
+        uint256 _reward = _actualizeReward(_tokenId);
 
-        if (reward != 0) {
-            _validateStakePosition(_stakingPosition);
-            StakeForParams memory _stakeForParameters = StakeForParams(
-                reward,
-                _stakingPositionInput,
-                msg.sender,
-                _stakingPosition
-            );
-
-            _stakeRouting(_stakeForParameters, false);
+        if (_reward != 0) {
+            _addToStake(msg.sender, _tokenId, _reward, false);
         }
-    }
-
-    /// @dev the output URI will be: "https://token-cdn-domain/<tokenId>"
-    function uri(uint256 tokenId) public view override returns (string memory) {
-        return string(abi.encodePacked(super.uri(0), Strings.toString(tokenId)));
     }
 
     /// @notice claim the original staking
     /// @param _tokenId the nft id
-    /// @param _amount the amount user wants to claim
+    /// @param _amount the amount the user wants to claim
     function claim(uint256 _tokenId, uint256 _amount) public updateReward(_tokenId) {
         if (ownerOf(_tokenId) != msg.sender) {
             CustomErrors.unauthorizedRevert();
@@ -158,12 +150,9 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         }
     }
 
-    function _validateStakePosition(uint8 stakingPosition) internal pure {
-        if (
-            stakingPosition != STAKING_POSITION_NEW && stakingPosition != STAKING_POSITION_CURRENT
-        ) {
-            revert CustomErrors.InvalidInput(stakingPosition);
-        }
+    /// @dev the output URI will be: "https://token-cdn-domain/<tokenId>"
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(super.uri(0), Strings.toString(tokenId)));
     }
 
     /// @dev update state(holder,owner of the nft) with any nft transfer
@@ -196,37 +185,25 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         if (_totalAmount != 0) {
             suprimeToken.transfer(msg.sender, _totalAmount);
             if (reward != 0) {
-                emit RewardPaidSingle(msg.sender, _tokenId, reward);
+                emit RewardPaid(msg.sender, _tokenId, reward);
             }
         }
 
         emit Withdrawn(msg.sender, _tokenId, _amount, reward);
     }
 
-    function _stakeRouting(StakeForParams memory _stakeForParams, bool _withTransfer) internal {
-        _stakeForParams.stakingPosition == STAKING_POSITION_NEW
-            ? _stake(
-                _stakeForParams.user,
-                _stakeForParams.amountSuprime,
-                uint8(_stakeForParams.stakingPositionInput),
-                _withTransfer
-            )
-            : _addToStake(
-                _stakeForParams.user,
-                _stakeForParams.stakingPositionInput,
-                _stakeForParams.amountSuprime
-            );
-    }
-
     function _addToStake(
         address _staker,
         uint256 _tokenId,
-        uint256 _amountSuprime
+        uint256 _amountSuprime,
+        bool _withTransfer
     ) internal updateReward(_tokenId) {
         if (ownerOf(_tokenId) != _staker) {
             CustomErrors.unauthorizedRevert();
         }
-
+        if (_withTransfer) {
+            suprimeToken.transferFrom(msg.sender, address(this), _amountSuprime);
+        }
         totalPool = totalPool + _amountSuprime;
         uint8 _lockingPeriod = stakers[_tokenId].lockingPeriod;
         totalPoolWithPower = totalPoolWithPower + (_amountSuprime * stakedMultipliers[_lockingPeriod]);
@@ -238,15 +215,13 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
     function _stake(
         address _staker,
         uint256 _amountSuprime,
-        uint8 _lock,
-        bool _withTransfer
+        uint8 _lock
     ) internal updateReward(_stakingIndex) checkLockingPeriod(_lock) {
         if (_amountSuprime == 0) {
             revert CustomErrors.InvalidInput(_amountSuprime);
         }
 
         totalPool = totalPool + _amountSuprime;
-
         uint8 multiplier = stakedMultipliers[_lock];
         totalPoolWithPower = totalPoolWithPower + (_amountSuprime * multiplier);
         uint256 stakingIndex = _stakingIndex;
@@ -256,13 +231,9 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         stakers[stakingIndex].startTime = block.timestamp;
         stakers[stakingIndex].lockingPeriod = _lock;
 
-        if (_withTransfer) {
-            suprimeToken.transferFrom(msg.sender, address(this), _amountSuprime);
-        }
-
-        emit Staked(_staker, stakingIndex, _amountSuprime, _lock);
-
+        suprimeToken.transferFrom(msg.sender, address(this), _amountSuprime);
         _mintNewNFT(stakingIndex, _staker);
+        emit Staked(_staker, stakingIndex, _amountSuprime, _lock);
     }
 
     function _mintNewNFT(uint256 stakingIndex, address _staker) internal {

@@ -27,7 +27,6 @@ abstract contract AbstractStaking is
 
     uint256 internal constant PRECISION = 10 ** 25;
     uint256 internal constant DECIMALS18 = 10 ** 18;
-    uint256 internal constant MAX_LENGTH_50 = 50;
     // staking position
     uint8 internal constant STAKING_POSITION_NEW = 0;
     uint8 internal constant STAKING_POSITION_CURRENT = 1;
@@ -94,7 +93,7 @@ abstract contract AbstractStaking is
 
     // solhint-disable-next-line
     function __Staking_init(address _suprimeToken, uint256 _blocksPerDay) internal onlyInitializing {
-        __Ownable2Step_init();
+        __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
 
         _stakingIndex = 1;
@@ -174,13 +173,6 @@ abstract contract AbstractStaking is
         if (_rewardTokensLocked > suprimeToken.balanceOf(address(this)) - _totalStakedAmount) {
             revert CustomErrors.InsufficientLiquidity(_rewardTokensLocked);
         }
-
-        emit RewardsSet(
-            _oldRewardPerBlock,
-            _rewardPerBlock,
-            _firstBlockWithReward,
-            _lastBlockWithReward
-        );
     }
 
     /// @notice transfer left token reward to the owner
@@ -190,8 +182,6 @@ abstract contract AbstractStaking is
         uint256 nonLockedTokens = _suprimeToken.balanceOf(address(this)) - rewardTokensLocked - _totalStakedAmount;
         if (nonLockedTokens != 0) {
             _suprimeToken.transfer(msg.sender, nonLockedTokens);
-
-            emit RewardTokensRecovered(nonLockedTokens);
         }
     }
 
@@ -327,32 +317,15 @@ abstract contract AbstractStaking is
         totalPoolWithPower = totalPoolWithPower - (_amount * stakedMultipliers[stakers[stakingIndex].lockingPeriod]);
     }
 
-    function _calculateReward(
-        uint256[] calldata _stakingIndexes
+    function _actualizeReward(
+        uint256 _tokenId
     ) internal returns (uint256 reward) {
-        uint256 _length = _stakingIndexes.length;
-        if (_length > MAX_LENGTH_50) {
-            revert CustomErrors.ExceedMaxLimit(_length);
+        if (ownerOf(_tokenId) != msg.sender) {
+            CustomErrors.unauthorizedRevert();
         }
-        uint256[] memory rewards = new uint256[](_length);
-        uint256 index;
-        uint256 stakingIndex;
-        uint256 _reward;
-        for (uint256 i = _length; i != 0; i = i - 1) {
-            index = i - 1;
-            stakingIndex = _stakingIndexes[index];
-            /// @dev nested if instead of AND save gas
-            if (ownerOf(stakingIndex) != msg.sender) {
-                CustomErrors.unauthorizedRevert();
-            }
-
-            _updateReward(stakingIndex);
-
-            _reward = _getReward(stakingIndex);
-            reward = reward + _reward;
-            rewards[index] = _reward;
-        }
-        emit RewardPaidMultiple(msg.sender, _stakingIndexes, rewards);
+        _updateReward(_tokenId);
+        reward = _getReward(_tokenId);
+        emit RewardPaid(msg.sender, _tokenId, reward);
     }
 
     function _getReward(uint256 stakingIndex) internal returns (uint256 _reward) {

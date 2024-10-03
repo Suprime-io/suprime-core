@@ -15,16 +15,6 @@ interface IStaking {
         bytes32 r; // a valid secp256k1 signature from owner over the EIP712-formatted function arguments
         bytes32 s; // a valid secp256k1 signature from owner over the EIP712-formatted function arguments
     }
-
-    /// @notice emitted when reward is set
-    event RewardsSet(
-        uint256 indexed oldRewardPerBlock,
-        uint256 indexed newRewardPerBlock,
-        uint256 firstBlockWithReward,
-        uint256 lastBlockWithReward
-    );
-    /// @notice emitted when token recovered
-    event RewardTokensRecovered(uint256 amount);
     /// @notice emitted when user stake an amount of token
     event Staked(
         address indexed user,
@@ -39,10 +29,7 @@ interface IStaking {
         uint256 amountByLiquidation,
         uint256 reward
     );
-    /// @notice emitted when staker claim rewards for multiple tokens ids
-    event RewardPaidMultiple(address indexed user, uint256[] stakingIndexes, uint256[] rewards);
-    /// @notice emitted when staker claim rewards for one token
-    event RewardPaidSingle(address indexed user, uint256 indexed stakingIndex, uint256 reward);
+    event RewardPaid(address indexed user, uint256 indexed stakingIndex, uint256 reward);
     /// @notice emitted when user increase the staking position
     event AddedToStake(address indexed user, uint256 indexed stakingIndex, uint256 amount);
 
@@ -77,22 +64,19 @@ interface IStaking {
 
 
     function stakeWithPermit(
-        uint256 _amount,
-        uint8 _lock,
+        uint256 amount,
+        uint256 tokenId,
+        uint8 lock,
         PermitParams calldata _permitParams
     ) external;
 
-    function stake(uint256 _amount, uint8 _lock) external;
+    function stake(uint256 _amount, uint256 tokenId, uint8 _lock) external;
 
     function withdraw(uint256 _stakingIndex) external;
 
-    function claimReward(uint256[] calldata _tokenIds) external;
+    function claimReward(uint256 _tokenId) external;
 
-    function restakeReward(
-        uint256[] calldata _tokenIds,
-        uint256 _stakingPositionInput,
-        uint8 _stakingPosition
-    ) external;
+    function restakeReward(uint256 tokenId) external;
 
     function setRewards(uint256 _amount, uint256 _durations) external;
 

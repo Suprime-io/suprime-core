@@ -1,5 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-verify");
+require("@nomiclabs/hardhat-web3");
+require('@openzeppelin/hardhat-upgrades');
 require('dotenv').config()
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -18,6 +20,9 @@ module.exports = {
     enabled: false
   },
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
     localhost: {
       //url: ``,
       sabler: '0x7a43F8a888fa15e68C103E18b0439Eb1e98E4301',

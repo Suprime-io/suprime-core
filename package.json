@@ -2,16 +2,24 @@
   "name": "suprime-core",
   "scripts": {
     "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
     "local_node": "npx hardhat node",
     "deploy_local": "npx hardhat run --network localhost scripts/deploy.js",
     "deploy_sepolia": "npx hardhat run --network sepolia scripts/deploy.js",
     "deploy_token": "npx hardhat run --network mainnet scripts/token.js"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.5",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.4.0",
+    "bignumber.js": "^9.1.2",
     "dotenv": "^16.4.5",
-    "hardhat": "^2.21.0"
+    "ethers": "^6.13.3",
+    "hardhat": "^2.21.0",
+    "web3": "^1.10.4"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
