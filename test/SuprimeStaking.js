@@ -1,17 +1,14 @@
 const {
-  time,
   loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
-const { toWei, getCurrentBlockTimestamp, toBN, getTransactionBlock, increaseTime, advanceBlocks, advanceBlockTo, fromWei } = require('../helpers/utils')
-const { upgrades, hre } = require('hardhat');
+const { toWei, getCurrentBlockTimestamp, toBN, getTransactionBlock, advanceBlocks} = require('../helpers/utils')
+const { upgrades } = require('hardhat');
 
 const { AddressZero } = require("@ethersproject/constants");
 
 describe("SuprimeStaking", function () {
-
-  const ONE_DAY_IN_SECS = 24 * 60 * 60;
 
   let suprimeToken;
   let owner;
@@ -58,12 +55,18 @@ describe("SuprimeStaking", function () {
 
     beforeEach(async () => {
       suprimeStaking = await loadFixture(deploySuprimeStaking);
-      await suprimeToken.transfer(suprimeStaking.getAddress(), toWei("10000"));
+      await suprimeToken.transfer(suprimeStaking.getAddress(), toWei("10000000"));
       await suprimeToken.connect(addr1).approve(suprimeStaking.getAddress(), toWei('100000'));
       await suprimeToken.connect(addr2).approve(suprimeStaking.getAddress(), toWei('100000'));
       await suprimeToken.connect(addr3).approve(suprimeStaking.getAddress(), toWei('100000'));
 
-      await suprimeStaking.setRewards(toWei("10000"), 1);
+      // 60 * 60 + 24 blocks per day
+      // 60 * 60 + 24 rewards per day
+      // 1 block = 1 sec = 1 reward
+
+      const secondsAndBlocksAndRewardsOneDay = 60 * 60 * 24;
+      const secondsAndBlocksAndRewards90Days = secondsAndBlocksAndRewardsOneDay * 90;
+      await suprimeStaking.setRewards(toWei(secondsAndBlocksAndRewards90Days.toString()), 90);
     });
 
     it("should revert if stake 0 tokens", async () => {
@@ -80,12 +83,12 @@ describe("SuprimeStaking", function () {
 
     it("should transfer SUPRIME tokens", async () => {
       expect(await suprimeToken.balanceOf(addr1)).to.be.equal(toWei("100000"));
-      expect(await suprimeToken.balanceOf(suprimeStaking.getAddress())).to.be.equal(toWei("10000"));
+      expect(await suprimeToken.balanceOf(suprimeStaking.getAddress())).to.be.equal(toWei("10000000"));
 
       await suprimeStaking.connect(addr1).stake(toWei("100"), 0, 3);
 
       expect(await suprimeToken.balanceOf(addr1)).to.be.equal(toWei("99900"));
-      expect(await suprimeToken.balanceOf(suprimeStaking.getAddress())).to.be.equal(toWei("10100"));
+      expect(await suprimeToken.balanceOf(suprimeStaking.getAddress())).to.be.equal(toWei("10000100"));
     });
 
     it("should increase totalPool & total pool power", async () => {
@@ -153,31 +156,33 @@ describe("SuprimeStaking", function () {
       const emptyByteParam = ethers.getBytes('0x');
 
       await expect(suprimeStaking.connect(addr1).safeTransferFrom(addr1, addr2, 1, 1, emptyByteParam))
-        .to.be.revertedWithCustomError(suprimeStaking, 'TransferNotAllowed');;
+        .to.be.revertedWithCustomError(suprimeStaking, 'TransferNotAllowed');
     });
 
-   /*it("should update user rewards before", async () => {
-     const tx = await suprimeStaking.connect(addr1).stake(toWei("50"), 0, 3);
+   it("should update user rewards before", async () => {
+     await suprimeStaking.connect(addr1).stake(toWei("100"), 0, 3);
      expect((await suprimeStaking.earned(1)).toString()).to.be.equal(toWei("0"));
 
-     console.log(await time.latest())
+     const oneDayInSec = 60 * 60 * 24;
+     await advanceBlocks(oneDayInSec);
 
-     const dayLater = (await time.latest()) + ONE_DAY_IN_SECS;
-
-     await suprimeStaking.connect(addr1).stake(toWei("50"), 0, 3);
-     await time.increaseTo(dayLater);
-
-     console.log(await time.latest())
-
-     //const tx = await suprimeStaking.connect(addr2).stake(toWei("50"), 0, 3);
-
-
+     const tx = await suprimeStaking.connect(addr1).stake(toWei("100"), 1, 0);
      const currentBlock = getTransactionBlock(tx);
 
-     expect(await suprimeStaking.lastUpdateBlock()).to.be.equal(currentBlock + 1);
-     //expect((await suprimeStaking.earned(1)).toString()).to.be.equal(toWei("100"));
-     expect((await suprimeStaking.rewardPerToken()).toString()).to.be.equal(toWei("2"));
-   });*/
+     expect(await suprimeStaking.lastUpdateBlock()).to.be.equal(currentBlock);
+     expect((await suprimeStaking.earned(1)).toString()).to.be.equal(toWei(toBN(oneDayInSec + 1).toString()));
+   });
+
+    it("should mint new nft while staking for another lock", async () => {
+      await suprimeStaking.connect(addr1).stake(toWei("100"), 0, 3);
+
+      //another lock
+      await expect(suprimeStaking.connect(addr1).stake(toWei("100"), 0, 6))
+        .to.emit(suprimeStaking, "NFTMinted");
+
+      await expect(suprimeStaking.connect(addr1).stake(toWei("100"), 0, 0))
+        .to.be.revertedWithCustomError(suprimeStaking, 'InvalidInput');
+    });
   });
 
   describe("withdraw", () => {
@@ -208,10 +213,10 @@ describe("SuprimeStaking", function () {
 
     it("should revert if locking period not ended", async () => {
       await expect(suprimeStaking.connect(addr1).withdraw(1))
-        .to.be.revertedWithCustomError(suprimeStaking, 'ClaimNotReady');
+        .to.be.revertedWithCustomError(suprimeStaking, 'WithdrawNotReady');
     });
 
-    it("should withdraw staked amount + rewards + brun nft after locking period is ended", async () => {
+    it("should withdraw staked amount + rewards + burn nft after locking period is ended", async () => {
       const secondsAndBlocksAndRewards = 60 * 60 * 24 * 90; // in 3 months = 7.776.000
       await advanceBlocks(secondsAndBlocksAndRewards); // increase time 3 month
 
@@ -248,86 +253,68 @@ describe("SuprimeStaking", function () {
     });
 
 
-    it("should decrease totalPool & total pool power with multiple locking period", async () => {
-      /*await suprimeStaking.stake(toWei("100"), 0, 6, { from: addr2 });
-      await suprimeStaking.stake(toWei("100"), 0, 12, { from: addr1 });
-      await suprimeStaking.stake(toWei("100"), 0, 24, { from: addr2 });
-      await suprimeStaking.stake(toWei("100"), 0, 36, { from: addr1 });
+    it("should increase totalPool & total pool power with multiple stakings", async () => {
+      //add the existing stake
+      await expect(suprimeStaking.connect(addr1).stake(toWei("100"), 1, 0))
+        .to.not.emit(suprimeStaking, "NFTMinted");
 
-      await increaseTime(LOCKING_PERIOD.MONTH_1 * PERIOD_DURATION + 10); // increase time 1 month
-      await suprimeStaking.withdraw(1, { from: addr1 });
+      expect(await suprimeStaking.totalPool()).to.be.equal(toWei("200"));
+      expect(await suprimeStaking.totalPoolWithPower()).to.be.equal(toWei("200"));
 
-      assert.equal((await suprimeStaking.totalPool()).toString(), toWei("400"));
-      assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("1400"));
+      await advanceBlocks(60 * 60 * 24 * 90 + 1); // 3 month
+      await expect(suprimeStaking.connect(addr1).stake(toWei("100"), 1, 0))
+        .to.not.emit(suprimeStaking, "NFTMinted");
 
-      await increaseTime(LOCKING_PERIOD.MONTH_6 * PERIOD_DURATION + 10); // increase time 6 month
-      await suprimeStaking.withdraw(2, { from: addr2 });
+      expect(await suprimeStaking.totalPool()).to.be.equal(toWei("300"));
+      expect(await suprimeStaking.totalPoolWithPower()).to.be.equal(toWei("300"));
 
-      assert.equal((await suprimeStaking.totalPool()).toString(), toWei("300"));
-      assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("1200"));
+      //instantly try to withdraw
+      await expect(suprimeStaking.connect(addr1).withdraw(1))
+        .to.emit(suprimeStaking, "Withdrawn")
+        .withArgs(addr1, 1, toWei("300"), anyValue);
 
-      await increaseTime(LOCKING_PERIOD.MONTH_12 * PERIOD_DURATION + 10); // increase time 12 month
-      await suprimeStaking.withdraw(3, { from: addr1 });
-
-      assert.equal((await suprimeStaking.totalPool()).toString(), toWei("200"));
-      assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("900"));
-
-      await increaseTime(LOCKING_PERIOD.MONTH_24 * PERIOD_DURATION + 10); // increase time 24 month
-      await suprimeStaking.withdraw(4, { from: addr2 });
-
-      assert.equal((await suprimeStaking.totalPool()).toString(), toWei("100"));
-      assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("500"));
-
-      await increaseTime(LOCKING_PERIOD.MONTH_36 * PERIOD_DURATION + 10); // increase time 36 month
-      await suprimeStaking.withdraw(5, { from: addr1 });
-
-      assert.equal((await suprimeStaking.totalPool()).toString(), 0);
-      assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), 0);*/
+      expect(await suprimeStaking.totalPool()).to.be.equal(toWei("0"));
+      expect(await suprimeStaking.totalPoolWithPower()).to.be.equal(toWei("0"));
     });
-/*
-            it("should withdraw staked amount with liquidation", async () => {
-              const rewards1 = toWei("200");
-              const rewards2 = toWei("300");
+  });
 
-              await suprimeStaking.stake(toWei("100"), LOCKING_PERIOD.MONTH_6, { from: addr2 });
+  describe("restake", async () => {
+    let suprimeStaking;
 
-              assert.equal((await suprimeStaking.totalPool()).toString(), toWei("200"));
-              assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("300"));
+    beforeEach(async () => {
+      suprimeStaking = await loadFixture(deploySuprimeStaking);
+      await suprimeToken.transfer(suprimeStaking.getAddress(), toWei("10000000"));
+      await suprimeToken.connect(addr1).approve(suprimeStaking.getAddress(), toWei('100000'));
 
-              await compoundPool.liquidatesuprimeStaking(toWei("100"), USER3);
+      // 60 * 60 + 24 blocks per day
+      // 60 * 60 + 24 rewards per day
+      // 1 block = 1 sec = 1 reward
 
-              assert.equal((await suprimeStaking.liquidationAmount()).toString(), toWei("100"));
+      const secondsAndBlocksAndRewardsOneDay = 60 * 60 * 24;
+      const secondsAndBlocksAndRewards90Days = secondsAndBlocksAndRewardsOneDay * 90;
+      await suprimeStaking.setRewards(toWei(secondsAndBlocksAndRewards90Days.toString()), 90);
 
-              await increaseTime(LOCKING_PERIOD.MONTH_6 * PERIOD_DURATION + 10); // increase time 6 month
+      await suprimeStaking.connect(addr1).stake(toWei("100"), 0, 3);
+    });
 
-              const balanceaddr1Before = (await suprimeToken.balanceOf(addr1)).toString();
+    it("should revert if user not the owner of NFT", async () => {
+      await expect(suprimeStaking.connect(addr2).restakeReward(1))
+        .to.be.revertedWithCustomError(suprimeStaking, 'Unauthorized');
+    });
 
-              const balanceaddr2Before = (await suprimeToken.balanceOf(addr2)).toString();
+    it("should update rewards on restake", async () => {
+      const tx = await suprimeStaking.connect(addr1).restakeReward(1);
 
-              await suprimeStaking.withdraw(1, { from: addr1 });
+      const currentBlock = getTransactionBlock(tx);
+      const info = await suprimeStaking.getStakingInfoByIndex(1);
 
-              assert.equal((await suprimeStaking.liquidationAmount()).toString(), toWei("50"));
-              assert.equal((await suprimeStaking.totalPool()).toString(), toWei("100"));
-              assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), toWei("200"));
+      expect(info.rewards).to.be.equal("0");
+      expect(info.staked).to.be.equal(toWei("101"));
 
-              await suprimeStaking.withdraw(2, { from: addr2 });
+      expect(await suprimeStaking.lastUpdateBlock()).to.be.equal(currentBlock);
+    });
 
-              const balanceaddr1After = (await suprimeToken.balanceOf(addr1)).toString();
-              const balanceaddr2After = (await suprimeToken.balanceOf(addr2)).toString();
 
-              assert.equal(
-                toBN(balanceaddr1After).minus(balanceaddr1Before).precision(5).toString(),
-                toBN(withdrawAmount).plus(rewards1).minus(toWei("50")).toString(),
-              );
-
-              assert.equal(
-                toBN(balanceaddr2After).minus(balanceaddr2Before).precision(5).toString(),
-                toBN(withdrawAmount).plus(rewards2).minus(toWei("50")).toString(),
-              );
-              assert.equal((await suprimeStaking.totalPool()).toString(), 0);
-              assert.equal((await suprimeStaking.totalPoolWithPower()).toString(), 0);
-              assert.equal((await suprimeStaking.liquidationAmount()).toString(), 0);
-            });*/
   });
 
 

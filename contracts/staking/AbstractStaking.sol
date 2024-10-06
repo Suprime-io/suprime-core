@@ -58,7 +58,7 @@ abstract contract AbstractStaking is
     uint256 public rewardTokensLocked;
 
     /// @notice the total token staked in the pool
-    uint256 public totalPool; // use for liquidation
+    uint256 public totalPool;
     /// @notice the total token staked in the pool multiply by the staking multiplier
     uint256 public totalPoolWithPower; // use for rewards
 
@@ -112,18 +112,6 @@ abstract contract AbstractStaking is
 
     function getTotalPoolWithPower() external view returns (uint256) {
         return totalPoolWithPower;
-    }
-
-    /// @notice return total staked amount stored of given staking indexes
-    /// @dev the function used by claim voting so there is no check for bounding array input lenght
-    /// as it is already checked while lock nft
-    /// @param _stakingIndexes the list of index of the nft/staking
-    function getFullStakedAmounts(
-        uint256[] calldata _stakingIndexes
-    ) external view returns (uint256 totalStaked) {
-        for (uint256 i = _stakingIndexes.length; i != 0; i = i - 1) {
-            totalStaked = totalStaked + getFullStakedAmount(_stakingIndexes[i - 1]);
-        }
     }
 
     /// @notice set rewards, reward per block access: reward pool

@@ -10,6 +10,4 @@ interface ISuprimeStaking {
         uint256 locked; // token amount
         uint256 claimed; // tokens claimed from vesting
     }
-
-    function claim(uint256 _tokenId, uint256 _amount) external;
 }

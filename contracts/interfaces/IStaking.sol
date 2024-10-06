@@ -26,7 +26,7 @@ interface IStaking {
     event Withdrawn(
         address indexed user,
         uint256 indexed stakingIndex,
-        uint256 amountByLiquidation,
+        uint256 amount,
         uint256 reward
     );
     event RewardPaid(address indexed user, uint256 indexed stakingIndex, uint256 reward);
@@ -45,8 +45,8 @@ interface IStaking {
     struct PublicStakingInfo {
         uint256 stakingId; // token id / index of the stake
         uint256 staked; // staked token amount
-        uint256 startTime; // start time of the stgaking lock
-        uint256 endTime; // end time of the stgaking lock
+        uint256 startTime; // start of lock
+        uint256 endTime; // end of lock
         uint256 rewards; // accumulated reward of the staking
         uint256 rewardPerTokenPaid; // reward per token ratio that user claimed
         address staker; // address of the staker
@@ -81,10 +81,6 @@ interface IStaking {
     function setRewards(uint256 _amount, uint256 _durations) external;
 
     function getFullStakedAmount(uint256 _stakingIndex) external view returns (uint256);
-
-    function getFullStakedAmounts(
-        uint256[] calldata _stakingIndexes
-    ) external view returns (uint256 totalStaked);
 
     function canWithdraw(uint256 _stakingIndex) external view returns (bool);
 

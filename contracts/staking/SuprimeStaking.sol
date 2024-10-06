@@ -76,8 +76,10 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
     function stake(uint256 _amountSuprime, uint256 _tokenId, uint8 _lock) external nonReentrant {
         if (_tokenId > 0) {
             _addToStake(msg.sender, _tokenId, _amountSuprime, true);
-        } else {
+        } else if (_lock > 0){
             _stake(msg.sender, _amountSuprime, _lock);
+        } else {
+            revert CustomErrors.InvalidInput(0);
         }
     }
 
@@ -90,7 +92,7 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
             CustomErrors.unauthorizedRevert();
         }
         if (!canWithdraw(_tokenId)) {
-            revert CustomErrors.ClaimNotReady(msg.sender);
+            revert CustomErrors.WithdrawNotReady(msg.sender);
         }
 
         uint256 _stakedAmount = stakers[_tokenId].staked;
@@ -119,34 +121,6 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
 
         if (_reward != 0) {
             _addToStake(msg.sender, _tokenId, _reward, false);
-        }
-    }
-
-    /// @notice claim the original staking
-    /// @param _tokenId the nft id
-    /// @param _amount the amount the user wants to claim
-    function claim(uint256 _tokenId, uint256 _amount) public updateReward(_tokenId) {
-        if (ownerOf(_tokenId) != msg.sender) {
-            CustomErrors.unauthorizedRevert();
-        }
-
-        // vesitng allowed in case locking period not ended,otherwise user can withdraw all
-        if (canWithdraw(_tokenId)) {
-            revert CustomErrors.CannotClaim();
-        }
-        if (_amount == 0 ) {
-            revert CustomErrors.InvalidInput(_amount);
-        }
-
-        _withdraw(_tokenId, _amount);
-        uint256 _staked = stakers[_tokenId].staked;
-        if (_amount == _staked) {
-            //withdraw full position
-            _removeTokenPosition(_tokenId, _amount);
-        } else {
-            stakers[_tokenId].staked = _staked - _amount;
-            suprimeToken.transfer(msg.sender, _amount);
-            emit Withdrawn(msg.sender, _tokenId, _amount, 0);
         }
     }
 

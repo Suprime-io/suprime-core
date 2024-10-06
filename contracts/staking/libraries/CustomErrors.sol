@@ -7,8 +7,7 @@ library CustomErrors {
 
     error InvalidInput(uint256 value);
 
-    error ClaimNotReady(address user);
-    error CannotClaim();
+    error WithdrawNotReady(address user);
 
     error InvalidSignature();
     error ExceedMaxLimit(uint256 value);
