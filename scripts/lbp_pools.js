@@ -62,6 +62,7 @@ async function main() {
   //TODO TransferOwnership: LiquidityBootstrapPoolFactory
   //TODO Update recipients: Treasury
   //TODO TransferOwnership: Treasury
+  //TODO TransferOwnership: ProxyAdmin
 
 }
 

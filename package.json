@@ -4,9 +4,10 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "local_node": "npx hardhat node",
-    "deploy_local": "npx hardhat run --network localhost scripts/deploy.js",
-    "deploy_sepolia": "npx hardhat run --network sepolia scripts/deploy.js",
-    "deploy_token": "npx hardhat run --network mainnet scripts/token.js"
+    "deploy_pools_local": "npx hardhat run --network localhost scripts/lbp_pools.js",
+    "deploy_pools_sepolia": "npx hardhat run --network sepolia scripts/lbp_pools.js",
+    "deploy_token_staking_local": "npx hardhat run --network localhost scripts/token_and_staking.js",
+    "deploy_token_staking_sepolia": "npx hardhat run --network sepolia scripts/token_and_staking.js"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",

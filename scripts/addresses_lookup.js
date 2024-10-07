@@ -15,3 +15,16 @@ module.exports.TREASURY_FEE_RECIPIENT = {
     sepolia: "0xC6AC25a9edefb3368710c0Aef5fC387691CA0e3A",      //deployer
     mainnet: "TODO",
 };
+
+module.exports.TREASURY_FEE_RECIPIENT = {
+    localhost: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",    //random
+    sepolia: "0xC6AC25a9edefb3368710c0Aef5fC387691CA0e3A",      //deployer
+    mainnet: "TODO",
+};
+
+module.exports.BLOCKS_PER_DAY = {
+    localhost: "7200",
+    sepolia: "7200",
+    mainnet: "7200",
+    base: "43200",
+};
