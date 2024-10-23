@@ -63,8 +63,10 @@ contract SuprimeStaking is ISuprimeStaking, ERC1155Upgradeable, AbstractStaking 
         }
         if (_tokenId > 0) {
             _addToStake(msg.sender, _tokenId, _amountSuprime, true);
-        } else {
+        } else if (_lock > 0){
             _stake(msg.sender, _amountSuprime, _lock);
+        } else {
+            revert CustomErrors.InvalidInput(0);
         }
     }
 

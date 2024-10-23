@@ -114,7 +114,7 @@ abstract contract AbstractStaking is
         return totalPoolWithPower;
     }
 
-    /// @notice set rewards, reward per block access: reward pool
+    /// @notice set rewards
     /// @param _amount amount of SUPRIME token rewards to distribute
     /// @param _days DAYS for the reward distribution
     function setRewards(uint256 _amount, uint256 _days) external onlyOwner updateReward(0) {

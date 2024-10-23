@@ -34,14 +34,13 @@ contract SuprimeStakingView is ISuprimeStakingView, Initializable {
 
     /// @notice Retunrs the expected APY of a given position
     /// @dev return expected apy for given staked amount and given multiplier
-    /// returns APY% in STBL multiplied by 10**5
     /// @return uint256 apy amount in 10**7 precision
     function getExpectedAPY(uint256 _staked, uint256 _multiplier) external view returns (uint256) {
         return _getAPY(_staked, _multiplier, true);
     }
 
     /// @notice Retunrs the APY of a given nft id
-    /// @dev returns APY% in STBL multiplied by 10**5
+    /// @dev return current apy
     /// @param _tokenId nft id
     /// @return _apy uint256 apy amount in 10**7 precision
     function getPositionAPY(uint256 _tokenId) external view returns (uint256 _apy) {
