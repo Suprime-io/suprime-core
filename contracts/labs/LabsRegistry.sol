@@ -17,7 +17,7 @@ contract LabsRegistry is Ownable{
 
     // proposalId => Acceleration
     mapping(uint256 => Acceleration) public accelerations;
-    // proposalId => workflows
+    // proposalId => workflows => instances
     mapping(uint256 => mapping(address => uint256) workflows) public accelerationWorkflows;
 
     event NewAcceleration(uint256 proposal);
@@ -41,15 +41,19 @@ contract LabsRegistry is Ownable{
     }
 
     /// @dev Owner of Acceleration can add (and create) a new Workflow from config
-    function addWorkflowToAcceleration(uint256 _proposalId, address _workflow) byProposalOwner(_proposalId) public {
+    function addWorkflowsToAcceleration(uint256 _proposalId, address[] calldata _workflows, string[] calldata _names) byProposalOwner(_proposalId) public {
         Acceleration storage _acceleration = accelerations[_proposalId];
         if (_acceleration.owner != msg.sender)
             revert NotAuthorized();
 
-        IWorkflow _workflowConfig = IWorkflow(_workflow);
-        uint256 _workflowInstance = _workflowConfig.instantiate();
-        accelerationWorkflows[_proposalId][_workflow] = _workflowInstance;
-        emit NewWorkflowForAcceleration(_proposalId, _workflow, _workflowInstance);
+        for (uint256 i; i < _workflows.length; i++) {
+            address _workflow = _workflows[i];
+            string memory _name = _names[i];
+            IWorkflow _workflowConfig = IWorkflow(_workflow);
+            uint256 _workflowInstance = _workflowConfig.instantiate(_name);
+            accelerationWorkflows[_proposalId][_workflow] = _workflowInstance;
+            emit NewWorkflowForAcceleration(_proposalId, _workflow, _workflowInstance);
+        }
     }
 
 

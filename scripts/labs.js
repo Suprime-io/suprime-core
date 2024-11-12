@@ -18,6 +18,11 @@ async function main() {
     await hre.run("verify:verify", {
       address: await labsRegistry.getAddress()
     });
+
+    await hre.tenderly.persistArtifacts({
+      name: "LabsRegistry",
+      address: await labsRegistry.getAddress(),
+    })
   }
 
 }
