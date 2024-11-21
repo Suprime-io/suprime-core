@@ -7,5 +7,5 @@ npx hardhat help
 npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
-npx hardhat run scripts/lbp_pools.js
+npx hardhat run scripts/lbp_pool_factory.js
 ```

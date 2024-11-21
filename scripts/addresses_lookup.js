@@ -10,6 +10,13 @@ module.exports.SABLER = {
     mainnet: "0xB10daee1FCF62243aE27776D7a92D39dC8740f95",
 };
 
+// DEPLOY IT FIRST!
+module.exports.TREASURY = {
+    localhost: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",    //random
+    sepolia: "0xBEaB712832112bd7664226db7CD025B153D3af55",
+    mainnet: "TODO",
+};
+
 module.exports.TREASURY_FEE_RECIPIENT = {
     localhost: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",    //random
     sepolia: "0xC6AC25a9edefb3368710c0Aef5fC387691CA0e3A",      //deployer

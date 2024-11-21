@@ -2,7 +2,6 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-verify");
 require("@nomiclabs/hardhat-web3");
 require('@openzeppelin/hardhat-upgrades');
-require("@tenderly/hardhat-tenderly");
 require('dotenv').config()
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -19,10 +18,6 @@ module.exports = {
   },
   sourcify: {
     enabled: false
-  },
-  tenderly: {
-    username: "BrightDaniel",
-    project: "suprime-core",
   },
   networks: {
     hardhat: {
