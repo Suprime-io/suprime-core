@@ -14,9 +14,9 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./utils/LiquidityBootstrapLib.sol";
-import "./utils/WeightedMathLib.sol";
-import "./Treasury.sol";
+import "../utils/LiquidityBootstrapLib.sol";
+import "../utils/WeightedMathLib.sol";
+import "../Treasury.sol";
 
 
 contract LiquidityBootstrapPool is Pausable, Clone, ReentrancyGuard {

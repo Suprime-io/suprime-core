@@ -20,6 +20,10 @@ module.exports = {
   sourcify: {
     enabled: false
   },
+  tenderly: {
+    username: "BrightDaniel",
+    project: "suprime-core",
+  },
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,

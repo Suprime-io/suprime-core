@@ -4,7 +4,7 @@ const {
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { toWei, getCurrentBlockTimestamp, toBN, getTransactionBlock, advanceBlocks} = require('../helpers/utils')
-const { upgrades } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 const { AddressZero } = require("@ethersproject/constants");
 
@@ -18,7 +18,9 @@ describe("SuprimeStaking", function () {
 
   before("Setup", async() => {
     const SuprimeTokenMock = await ethers.getContractFactory("SuprimeTokenMock");
-    suprimeToken = await SuprimeTokenMock.deploy();
+    const suprimeTokenTdly = (await SuprimeTokenMock.deploy());
+    suprimeToken = suprimeTokenTdly.nativeContract;
+
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
     await suprimeToken.mintArbitrary(addr1, toWei('100000'));
     await suprimeToken.mintArbitrary(addr2, toWei('100000'));
@@ -27,8 +29,9 @@ describe("SuprimeStaking", function () {
 
   async function deploySuprimeStaking() {
     const SuprimeStaking = await ethers.getContractFactory("SuprimeStaking");
-    const suprimeStaking = await upgrades.deployProxy(SuprimeStaking,
+    const suprimeStakingTdly = await upgrades.deployProxy(SuprimeStaking,
       [await suprimeToken.getAddress(), 60 * 60 * 24], {initializer: '__SuprimeStaking_init'});
+    const suprimeStaking = suprimeStakingTdly.proxyContract;
     await suprimeStaking.transferOwnership(owner)
     return suprimeStaking;
   }
