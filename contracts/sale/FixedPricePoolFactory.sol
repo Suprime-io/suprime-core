@@ -93,7 +93,7 @@ contract FixedPricePoolFactory is Merkle {
     /// -----------------------------------------------------------------------
 
     ///@notice Emitted when a new pool is created
-    event PoolCreated(address indexed poolAddress, PoolType poolType);
+    event PoolCreated(address indexed poolAddress, PoolType poolType, string ipfsData);
 
     /// -----------------------------------------------------------------------
     /// Immutable State
@@ -132,7 +132,8 @@ contract FixedPricePoolFactory is Merkle {
     function createFixedPricePool(
         BaseCreationParams memory params,
         uint256 assetsPerShare,
-        Tier[] memory tiers
+        Tier[] memory tiers,
+        string memory ipfsData
     )
     public
     returns (address pool)
@@ -155,7 +156,8 @@ contract FixedPricePoolFactory is Merkle {
         );
 
         pool = _createPool(
-            initialSharesForSale, params.shareToken, encodedParams, FIXED_PRICE_IMPL, PoolType.Fixed
+            initialSharesForSale, params.shareToken, encodedParams, FIXED_PRICE_IMPL,
+            PoolType.Fixed, ipfsData
         );
     }
 
@@ -168,7 +170,8 @@ contract FixedPricePoolFactory is Merkle {
         address shareToken,
         bytes memory encodedParams,
         address implementation,
-        PoolType poolType
+        PoolType poolType,
+        string memory ipfsData
     )
     internal
     returns (address pool)
@@ -177,7 +180,7 @@ contract FixedPricePoolFactory is Merkle {
 
         if (shareToken != address(0)) shareToken.safeTransferFrom(msg.sender, pool, sharesForSale);
 
-        emit PoolCreated(pool, poolType);
+        emit PoolCreated(pool, poolType, ipfsData);
     }
 
     /// -----------------------------------------------------------------------
