@@ -21,6 +21,8 @@ contract LabsRegistry is Ownable{
     mapping(uint256 => mapping(address => uint256) workflows) public accelerationWorkflows;
 
     event NewAcceleration(uint256 proposal);
+    event AddedSeedRaise(uint256 proposal, address raise);
+    event AddedPublicRaise(uint256 proposal, address raise);
     event NewWorkflowForAcceleration(uint256 proposal, address workflow, uint256 workflowInstance);
 
     error NotAuthorized();
@@ -32,6 +34,18 @@ contract LabsRegistry is Ownable{
     modifier byProposalOwner(uint256 _proposalId) {
         //TODO Check if done by the proposal's owner
         _;
+    }
+
+    function addSeedRaise(uint256 _proposalId, address _raise) byProposalOwner(_proposalId) public {
+        Acceleration storage _acceleration = accelerations[_proposalId];
+        _acceleration.seedRaise = _raise;
+        emit AddedSeedRaise(_proposalId, _raise);
+    }
+
+    function addPublicRaise(uint256 _proposalId, address _raise) byProposalOwner(_proposalId) public {
+        Acceleration storage _acceleration = accelerations[_proposalId];
+        _acceleration.publicRaise = _raise;
+        emit AddedPublicRaise(_proposalId, _raise);
     }
 
     function addAcceleration(uint256 _proposalId) byProposalOwner(_proposalId) public {

@@ -40,7 +40,7 @@ async function main() {
     });
 
     //verify Pool impl
-    const poolImplAddr = await factory.FIXED_PRICE_IMPL;
+    const poolImplAddr = await factory.FIXED_PRICE_IMPL();
     console.log(`Verifying the FixedPrice implementation at ${poolImplAddr}`)
     await hre.run("verify:verify", {
       address: poolImplAddr,

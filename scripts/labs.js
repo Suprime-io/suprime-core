@@ -13,16 +13,16 @@ async function main() {
   if (hre.network.name !== 'localhost') {
     console.log('Waiting before verification....')
     const delay = ms => new Promise(res => setTimeout(res, ms));
-    await delay(15000);
+    await delay(45000);
 
     await hre.run("verify:verify", {
       address: await labsRegistry.getAddress()
     });
 
-    await hre.tenderly.persistArtifacts({
+    /*await hre.tenderly.persistArtifacts({
       name: "LabsRegistry",
       address: await labsRegistry.getAddress(),
-    })
+    })*/
   }
 
 }

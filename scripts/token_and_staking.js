@@ -22,7 +22,7 @@ async function main() {
   if (hre.network.name !== 'localhost') {
     console.log('Waiting before verification....')
     const delay = ms => new Promise(res => setTimeout(res, ms));
-    await delay(10000);
+    await delay(45000);
 
     await hre.run("verify:verify", {
       address: token.target,

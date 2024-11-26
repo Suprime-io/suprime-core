@@ -168,6 +168,31 @@ contract FixedPricePool is BasePool {
         return maximumTokensPerUser().rawSub(purchasedShares[user]).min(sharesRemaining());
     }
 
+    struct Pool {
+        address asset;
+        address share;
+        uint256 assets;
+        uint256 shares;
+        uint256 assetsPerToken;
+        uint256 saleStart;
+        uint256 saleEnd;
+        uint256 totalPurchased;
+    }
+
+    /// @dev For offchain read
+    function args() public view virtual returns (Pool memory) {
+        return Pool(
+            assetToken(),
+            shareToken(),
+            totalNormalizedAssetsIn,
+            sharesForSale(),
+            assetsPerToken(),
+            saleStart(),
+            saleEnd(),
+            totalSharesSold
+        );
+    }
+
     /// -----------------------------------------------------------------------------------------------------------------------------------------
     /// GLOBAL LOGIC -- OVERRIDE REQUIRED -- Internal -- Read Functions
     /// -----------------------------------------------------------------------------------------------------------------------------------------
