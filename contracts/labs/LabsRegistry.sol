@@ -19,6 +19,8 @@ contract LabsRegistry is Ownable{
     mapping(uint256 => Acceleration) public accelerations;
     // proposalId => workflows => instances
     mapping(uint256 => mapping(address => uint256) workflows) public accelerationWorkflows;
+    // raise => proposalId
+    mapping(address => uint256) public raises;
 
     event NewAcceleration(uint256 proposal);
     event AddedSeedRaise(uint256 proposal, address raise);
@@ -39,12 +41,14 @@ contract LabsRegistry is Ownable{
     function addSeedRaise(uint256 _proposalId, address _raise) byProposalOwner(_proposalId) public {
         Acceleration storage _acceleration = accelerations[_proposalId];
         _acceleration.seedRaise = _raise;
+        raises[_raise] = _proposalId;
         emit AddedSeedRaise(_proposalId, _raise);
     }
 
     function addPublicRaise(uint256 _proposalId, address _raise) byProposalOwner(_proposalId) public {
         Acceleration storage _acceleration = accelerations[_proposalId];
         _acceleration.publicRaise = _raise;
+        raises[_raise] = _proposalId;
         emit AddedPublicRaise(_proposalId, _raise);
     }
 
